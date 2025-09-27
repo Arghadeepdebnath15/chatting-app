@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from './ThemeContext';
 import { useSocket } from '../contexts/SocketContext';
+import { API_BASE } from '../config';
 
 interface ChatListScreenProps {
   chats: Chat[];
@@ -247,7 +248,7 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
                   onClick={async () => {
                     if (!mobileInput) return;
                     try {
-                      const response = await fetch(`http://localhost:3002/api/search-user?mobile=${encodeURIComponent(mobileInput)}`, {
+                      const response = await fetch(`${API_BASE}/api/search-user?mobile=${encodeURIComponent(mobileInput)}`, {
                         headers: {
                           'Authorization': `Bearer ${token}`,
                           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
                         return;
                       }
                       // Add contact
-                      const addResponse = await fetch('http://localhost:3002/api/add-contact', {
+                      const addResponse = await fetch(`${API_BASE}/api/add-contact`, {
                         method: 'POST',
                         headers: {
                           'Authorization': `Bearer ${token}`,

@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Screen, User } from "../types";
+import { API_BASE } from '../config';
 
 interface ProfileScreenProps {
   onBack: () => void;
@@ -48,7 +49,7 @@ export function ProfileScreen({
   const fetchProfile = async () => {
     setImageLoading(true);
     try {
-      const response = await fetch("http://localhost:3002/api/profile", {
+      const response = await fetch(`${API_BASE}/api/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -68,7 +69,7 @@ export function ProfileScreen({
 
   const handleSave = async () => {
     try {
-      const response = await fetch("http://localhost:3002/api/profile", {
+      const response = await fetch(`${API_BASE}/api/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

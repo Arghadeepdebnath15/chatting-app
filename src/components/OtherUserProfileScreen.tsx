@@ -20,6 +20,7 @@ import {
 } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Screen, User } from "../types";
+import { API_BASE } from '../config';
 
 interface OtherUserProfileScreenProps {
   onBack: () => void;
@@ -60,7 +61,7 @@ export function OtherUserProfileScreen({
   const fetchProfile = async () => {
     setImageLoading(true);
     try {
-      const url = `http://localhost:3002/api/profile/${selectedUserId}`;
+      const url = `${API_BASE}/api/profile/${selectedUserId}`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -81,7 +82,7 @@ export function OtherUserProfileScreen({
 
   const handleBlockUser = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/api/block/${selectedUserId}`, {
+      const response = await fetch(`${API_BASE}/api/block/${selectedUserId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -101,7 +102,7 @@ export function OtherUserProfileScreen({
     setIsDeleting(true);
     try {
       console.log('Deleting chat...');
-      const response = await fetch(`http://localhost:3002/api/delete-chat/${selectedUserId}`, {
+      const response = await fetch(`${API_BASE}/api/delete-chat/${selectedUserId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -127,7 +128,7 @@ export function OtherUserProfileScreen({
 
   const handleReportUser = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/api/report/${selectedUserId}`, {
+      const response = await fetch(`${API_BASE}/api/report/${selectedUserId}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

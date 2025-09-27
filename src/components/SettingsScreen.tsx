@@ -18,6 +18,7 @@ import { Switch } from './ui/switch';
 import { motion } from 'framer-motion';
 import { useTheme } from './ThemeContext';
 import { User as UserType } from '../types';
+import { API_BASE } from '../config';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -39,7 +40,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
     const fetchProfile = async () => {
       if (!token) return;
       try {
-        const response = await fetch('http://localhost:3002/api/profile', {
+        const response = await fetch(`${API_BASE}/api/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const uploadResponse = await fetch('http://localhost:3002/api/upload-avatar', {
+      const uploadResponse = await fetch(`${API_BASE}/api/upload-avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -85,7 +86,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
         const { url } = await uploadResponse.json();
 
         // Update profile with new avatar
-        const updateResponse = await fetch('http://localhost:3002/api/profile', {
+        const updateResponse = await fetch(`${API_BASE}/api/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -96,7 +97,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
 
         if (updateResponse.ok) {
           // Refetch profile
-          const profileResponse = await fetch('http://localhost:3002/api/profile', {
+          const profileResponse = await fetch(`${API_BASE}/api/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',

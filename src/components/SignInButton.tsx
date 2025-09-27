@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { API_BASE } from '../config';
 
 declare global {
   interface Window {
@@ -25,7 +26,7 @@ const SignInButton: React.FC<SignInButtonProps> = ({ onSuccess }) => {
     window.phoneEmailListener = async function(userObj) {
       const user_json_url = userObj.user_json_url;
       try {
-        const response = await fetch('http://localhost:3002/api/login-otp', {
+        const response = await fetch(`${API_BASE}/api/login-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_json_url }),

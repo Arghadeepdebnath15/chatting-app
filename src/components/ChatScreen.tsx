@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useTheme } from './ThemeContext';
 import { useSocket } from '../contexts/SocketContext';
+import { API_BASE } from '../config';
 
 interface ChatScreenProps {
   chat: Chat;
@@ -38,7 +39,7 @@ export function ChatScreen({ chat, onBack, onNavigateToScreen, onNavigateToProfi
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`http://localhost:3002/api/messages/${userId}/${contactId}`, {
+        const response = await fetch(`${API_BASE}/api/messages/${userId}/${contactId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ export function ChatScreen({ chat, onBack, onNavigateToScreen, onNavigateToProfi
     // Mark messages as read when opening the chat
     const markAsRead = async () => {
       try {
-        await fetch(`http://localhost:3002/api/mark-read`, {
+        await fetch(`${API_BASE}/api/mark-read`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -110,7 +111,7 @@ export function ChatScreen({ chat, onBack, onNavigateToScreen, onNavigateToProfi
           // Mark as read since chat is open
           const markAsRead = async () => {
             try {
-              await fetch(`http://localhost:3002/api/mark-read`, {
+              await fetch(`${API_BASE}/api/mark-read`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,

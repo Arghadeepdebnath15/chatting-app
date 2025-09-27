@@ -43,13 +43,15 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"], // Multiple possible Vite ports
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"];
+
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());

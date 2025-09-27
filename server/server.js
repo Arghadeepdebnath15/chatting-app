@@ -39,6 +39,8 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"];
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -47,8 +49,6 @@ const io = socketIo(server, {
     methods: ["GET", "POST"]
   }
 });
-
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"];
 
 app.use(cors({
   origin: allowedOrigins,

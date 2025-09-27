@@ -30,23 +30,60 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
   // Listen for real-time messages and online status updates
   useEffect(() => {
     if (socket && isConnected) {
-      const handleReceiveMessage = (msg: any) => {
+      const handleReceiveMessage = async (msg: any) => {
         // Only update if this message is for the current user
         if (msg.receiverId === user.id) {
           setChats(prevChats => {
-            const updatedChats = prevChats.map(chat => {
-              if (chat.participants[0] === msg.senderId) {
-                return {
-                  ...chat,
-                  lastMessage: msg.content,
-                  lastMessageTime: new Date(msg.timestamp),
-                  unreadCount: chat.unreadCount + 1
-                };
-              }
-              return chat;
-            });
-            // Re-sort by lastMessageTime descending
-            return updatedChats.sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
+            const existingChatIndex = prevChats.findIndex(chat => chat.participants[0] === msg.senderId);
+            if (existingChatIndex !== -1) {
+              // Update existing chat
+              const updatedChats = prevChats.map((chat, index) => {
+                if (index === existingChatIndex) {
+                  return {
+                    ...chat,
+                    lastMessage: msg.content,
+                    lastMessageTime: new Date(msg.timestamp),
+                    unreadCount: chat.unreadCount + 1
+                  };
+                }
+                return chat;
+              });
+              // Re-sort by lastMessageTime descending
+              return updatedChats.sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
+            } else {
+              // New chat from unknown user - fetch user info and add new chat
+              fetch(`${API_BASE}/api/profile/${msg.senderId}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              })
+                .then(response => response.json())
+                .then(senderUser => {
+                  const newChat = {
+                    id: msg.senderId,
+                    type: 'individual' as const,
+                    name: senderUser.name,
+                    avatar: senderUser.avatar || 'https://images.unsplash.com/photo-1494790108755-2616b612b808?w=150&h=150&fit=crop&crop=face',
+                    participants: [msg.senderId],
+                    lastMessage: msg.content,
+                    lastMessageTime: new Date(msg.timestamp),
+                    unreadCount: 1,
+                    isOnline: senderUser.isOnline || false,
+                    isPinned: false,
+                    isTyping: false,
+                    messages: []
+                  };
+                  setChats(prev => {
+                    const updated = [...prev, newChat];
+                    return updated.sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
+                  });
+                })
+                .catch(error => {
+                  console.error('Error fetching new chat user:', error);
+                });
+              return prevChats;
+            }
           });
         }
       };
@@ -73,14 +110,21 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
         });
       };
 
+      const handleNewChat = () => {
+        // Refetch chats to include new contact
+        fetchChats();
+      };
+
       socket.on('receiveMessage', handleReceiveMessage);
       socket.on('userOnline', handleUserOnline);
       socket.on('userOffline', handleUserOffline);
+      socket.on('newChat', handleNewChat);
 
       return () => {
         socket.off('receiveMessage', handleReceiveMessage);
         socket.off('userOnline', handleUserOnline);
         socket.off('userOffline', handleUserOffline);
+        socket.off('newChat', handleNewChat);
       };
     }
   }, [socket, isConnected, user.id, setChats]);

@@ -644,6 +644,50 @@ io.on('connection', (socket) => {
       const message = new Message({ senderId, receiverId, content, type, status: 'sent' });
       await message.save();
 
+      // Add sender to receiver's contacts if not already
+      const receiver = await User.findById(receiverId);
+      if (receiver) {
+        const existing = receiver.contacts.find(c => c.id === senderId);
+        if (!existing) {
+          const sender = await User.findById(senderId).select('name mobile avatar status isOnline');
+          if (sender) {
+            receiver.contacts.push({
+              id: sender._id.toString(),
+              name: sender.name,
+              mobile: sender.mobile,
+              avatar: sender.avatar,
+              status: sender.status,
+              isOnline: sender.isOnline
+            });
+            await receiver.save();
+            // Emit newChat to receiver
+            io.to(receiverId).emit('newChat', { chatId: senderId });
+          }
+        }
+      }
+
+      // Add receiver to sender's contacts if not already
+      const sender = await User.findById(senderId);
+      if (sender) {
+        const existing = sender.contacts.find(c => c.id === receiverId);
+        if (!existing) {
+          const receiverUser = await User.findById(receiverId).select('name mobile avatar status isOnline');
+          if (receiverUser) {
+            sender.contacts.push({
+              id: receiverUser._id.toString(),
+              name: receiverUser.name,
+              mobile: receiverUser.mobile,
+              avatar: receiverUser.avatar,
+              status: receiverUser.status,
+              isOnline: receiverUser.isOnline
+            });
+            await sender.save();
+            // Emit newChat to sender
+            io.to(senderId).emit('newChat', { chatId: receiverId });
+          }
+        }
+      }
+
       // Emit to receiver
       io.to(receiverId).emit('receiveMessage', message);
       // Also emit back to sender for confirmation

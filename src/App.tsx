@@ -13,9 +13,11 @@ import { SettingsScreen } from './components/SettingsScreen';
 import { CallScreen } from './components/CallScreen';
 import { Screen, Message, Chat, Call, User } from './types';
 import { API_BASE } from './config';
+import { useIsMobile } from './components/ui/use-mobile';
 
 function AppContent({ user, setUser, token, setToken }: { user: User | null; setUser: (u: User | null) => void; token: string | null; setToken: (t: string | null) => void }) {
   const { socket } = useSocket();
+  const isMobile = useIsMobile();
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -178,6 +180,9 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      // Default to chat list with no selection on every app open
+      setCurrentScreen('chatList');
+      setSelectedChatId(null);
       // Fetch chats to validate chat screens
       fetchChats(storedToken);
     }
@@ -230,83 +235,137 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
             <>
               {/* Main Content Area */}
               <div className="flex-1 overflow-hidden pb-24">
-                {currentScreen === 'chatList' && (
-                  <ChatListScreen
-                    chats={chats}
-                    onNavigateToChat={navigateToChat}
-                    onNavigateToScreen={navigateToScreen}
-                    onNavigateToProfile={navigateToProfile}
-                    user={user!}
-                    token={token!}
-                    setChats={setChats}
-                    fetchChats={() => fetchChats(token!)}
-                  />
+                {(!isMobile && (currentScreen === 'chat' || currentScreen === 'groupChat' || currentScreen === 'chatList')) ? (
+                  <div className="flex h-full">
+                    <div className="w-3/10 border-r border-border">
+                      <ChatListScreen
+                        chats={chats}
+                        onNavigateToChat={navigateToChat}
+                        onNavigateToScreen={navigateToScreen}
+                        onNavigateToProfile={navigateToProfile}
+                        user={user!}
+                        token={token!}
+                        setChats={setChats}
+                        fetchChats={() => fetchChats(token!)}
+                        selectedChatId={selectedChatId}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      {currentScreen === 'chat' && selectedChat && (
+                        <ChatScreen
+                          chat={selectedChat}
+                          onBack={() => { setCurrentScreen('chatList'); setSelectedChatId(null); }}
+                          onNavigateToScreen={navigateToScreen}
+                          onNavigateToProfile={navigateToProfile}
+                          user={user!}
+                          token={token!}
+                          selectedUserId={selectedUserId}
+                          setSelectedUserId={setSelectedUserId}
+                          setCallInitiator={setCallInitiator}
+                        />
+                      )}
+                      {currentScreen === 'groupChat' && selectedChat && (
+                        <GroupChatScreen
+                          chat={selectedChat}
+                          onBack={() => { setCurrentScreen('chatList'); setSelectedChatId(null); }}
+                          onNavigateToScreen={navigateToScreen}
+                          user={user!}
+                          token={token!}
+                        />
+                      )}
+                        {currentScreen === 'chatList' && (
+                          <div className="h-full flex items-center justify-center">
+                            <div className="text-center p-8 bg-muted rounded-lg shadow-lg max-w-md">
+                              <div className="text-6xl mb-4">💬</div>
+                              <h2 className="text-2xl font-semibold text-muted-foreground mb-2">Welcome to ChatApp</h2>
+                              <p className="text-muted-foreground">Select a conversation from the sidebar to start messaging</p>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {currentScreen === 'chatList' && (
+                      <ChatListScreen
+                        chats={chats}
+                        onNavigateToChat={navigateToChat}
+                        onNavigateToScreen={navigateToScreen}
+                        onNavigateToProfile={navigateToProfile}
+                        user={user!}
+                        token={token!}
+                        setChats={setChats}
+                        fetchChats={() => fetchChats(token!)}
+                        selectedChatId={selectedChatId}
+                      />
+                    )}
+                    {currentScreen === 'chat' && selectedChat && (
+                      <ChatScreen
+                        chat={selectedChat}
+                        onBack={() => { setCurrentScreen('chatList'); setSelectedChatId(null); }}
+                        onNavigateToScreen={navigateToScreen}
+                        onNavigateToProfile={navigateToProfile}
+                        user={user!}
+                        token={token!}
+                        selectedUserId={selectedUserId}
+                        setSelectedUserId={setSelectedUserId}
+                        setCallInitiator={setCallInitiator}
+                      />
+                    )}
+                    {currentScreen === 'groupChat' && selectedChat && (
+                      <GroupChatScreen
+                        chat={selectedChat}
+                        onBack={() => { setCurrentScreen('chatList'); setSelectedChatId(null); }}
+                        onNavigateToScreen={navigateToScreen}
+                        user={user!}
+                        token={token!}
+                      />
+                    )}
+                    {currentScreen === 'profile' && (
+                      selectedUserId ? (
+                        <OtherUserProfileScreen
+                          onBack={() => { setCurrentScreen('chatList'); setSelectedUserId(null); }}
+                          onNavigateToScreen={navigateToScreen}
+                          user={user!}
+                          token={token!}
+                          selectedUserId={selectedUserId}
+                          setSelectedUserId={setSelectedUserId}
+                        />
+                      ) : (
+                        <ProfileScreen
+                          onBack={() => setCurrentScreen('chatList')}
+                          onNavigateToScreen={navigateToScreen}
+                          user={user!}
+                          token={token!}
+                        />
+                      )
+                    )}
+                    {currentScreen === 'settings' && (
+                      <SettingsScreen
+                        onBack={() => setCurrentScreen('chatList')}
+                        onNavigateToScreen={navigateToScreen}
+                        onLogout={handleLogout}
+                        user={user!}
+                        token={token!}
+                      />
+                    )}
+                    {currentScreen === 'calls' && (
+                      <CallScreen
+                        calls={calls}
+                        onBack={() => setCurrentScreen('chatList')}
+                      />
+                    )}
+                    {currentScreen === 'videoCall' && selectedUserId && (
+                      <VideoCallScreen
+                        onBack={() => { setCurrentScreen('chatList'); setSelectedUserId(null); setPendingOffer(null); }}
+                        selectedUserId={selectedUserId}
+                        userId={user!.id}
+                        isCaller={callInitiator === 'me'}
+                        pendingOffer={pendingOffer}
+                      />
+                    )}
+                  </>
                 )}
-                {currentScreen === 'chat' && selectedChat && (
-                  <ChatScreen
-                    chat={selectedChat}
-                    onBack={() => setCurrentScreen('chatList')}
-                    onNavigateToScreen={navigateToScreen}
-                    onNavigateToProfile={navigateToProfile}
-                    user={user!}
-                    token={token!}
-                    selectedUserId={selectedUserId}
-                    setSelectedUserId={setSelectedUserId}
-                    setCallInitiator={setCallInitiator}
-                  />
-                )}
-                {currentScreen === 'groupChat' && selectedChat && (
-                  <GroupChatScreen
-                    chat={selectedChat}
-                    onBack={() => setCurrentScreen('chatList')}
-                    onNavigateToScreen={navigateToScreen}
-                    user={user!}
-                    token={token!}
-                  />
-                )}
-                {currentScreen === 'profile' && (
-                  selectedUserId ? (
-                    <OtherUserProfileScreen
-                      onBack={() => { setCurrentScreen('chatList'); setSelectedUserId(null); }}
-                      onNavigateToScreen={navigateToScreen}
-                      user={user!}
-                      token={token!}
-                      selectedUserId={selectedUserId}
-                      setSelectedUserId={setSelectedUserId}
-                    />
-                  ) : (
-                    <ProfileScreen
-                      onBack={() => setCurrentScreen('chatList')}
-                      onNavigateToScreen={navigateToScreen}
-                      user={user!}
-                      token={token!}
-                    />
-                  )
-                )}
-                {currentScreen === 'settings' && (
-                  <SettingsScreen
-                    onBack={() => setCurrentScreen('chatList')}
-                    onNavigateToScreen={navigateToScreen}
-                    onLogout={handleLogout}
-                    user={user!}
-                    token={token!}
-                  />
-                )}
-              {currentScreen === 'calls' && (
-                <CallScreen
-                  calls={calls}
-                  onBack={() => setCurrentScreen('chatList')}
-                />
-              )}
-              {currentScreen === 'videoCall' && selectedUserId && (
-                <VideoCallScreen
-                  onBack={() => { setCurrentScreen('chatList'); setSelectedUserId(null); setPendingOffer(null); }}
-                  selectedUserId={selectedUserId}
-                  userId={user!.id}
-                  isCaller={callInitiator === 'me'}
-                  pendingOffer={pendingOffer}
-                />
-              )}
               </div>
 
               {/* Persistent Bottom Navigation */}

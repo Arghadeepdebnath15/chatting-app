@@ -17,9 +17,10 @@ interface ChatListScreenProps {
   token: string;
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   fetchChats: () => Promise<void>;
+  selectedChatId: string | null;
 }
 
-export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, onNavigateToProfile, user, token, setChats, fetchChats }: ChatListScreenProps) {
+export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, onNavigateToProfile, user, token, setChats, fetchChats, selectedChatId }: ChatListScreenProps) {
   const { theme } = useTheme();
   const { socket, isConnected } = useSocket();
   const [searchQuery, setSearchQuery] = useState('');
@@ -152,7 +153,7 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
   const regularChats = filteredChats.filter(chat => !chat.isPinned);
 
   return (
-    <div className="h-full bg-background flex flex-col">
+    <div className="h-full bg-gray-700 flex flex-col">
       {/* Header */}
       <motion.div 
         className="bg-gradient-to-r from-green-500 to-emerald-500 dark:from-green-700 dark:to-emerald-700 text-white px-4 py-4 shadow-xl"
@@ -240,22 +241,24 @@ export function ChatListScreen({ chats, onNavigateToChat, onNavigateToScreen, on
       </div>
 
       {/* Floating Action Button */}
-      <motion.div 
-        className="absolute bottom-24 right-6"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
-      >
-        <motion.button
-          onClick={() => setIsAddModalOpen(true)}
-          className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-xl hover:shadow-2xl text-white flex items-center justify-center"
-          whileHover={{ scale: 1.1, boxShadow: "0 20px 40px rgba(34, 197, 94, 0.4)" }}
-          whileTap={{ scale: 0.9 }}
-          initial={{ boxShadow: "0 10px 25px rgba(34, 197, 94, 0.3)" }}
+      {!selectedChatId && (
+        <motion.div
+          className="absolute bottom-24 right-6"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
         >
-          <Plus className="w-7 h-7" />
-        </motion.button>
-      </motion.div>
+          <motion.button
+            onClick={() => setIsAddModalOpen(true)}
+            className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-xl hover:shadow-2xl text-white flex items-center justify-center"
+            whileHover={{ scale: 1.1, boxShadow: "0 20px 40px rgba(34, 197, 94, 0.4)" }}
+            whileTap={{ scale: 0.9 }}
+            initial={{ boxShadow: "0 10px 25px rgba(34, 197, 94, 0.3)" }}
+          >
+            <Plus className="w-7 h-7" />
+          </motion.button>
+        </motion.div>
+      )}
 
       {/* Add Contact Modal */}
       <AnimatePresence>

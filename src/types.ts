@@ -34,10 +34,10 @@ export interface Message {
   timestamp: Date;
   type: 'text' | 'image' | 'emoji' | 'voice' | 'file';
   imageUrl?: string;
-  fileUrl?: string;
+  url?: string;
   fileName?: string;
   voiceDuration?: number;
-  status?: 'sending' | 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: { emoji: string; users: string[] }[];
   replyTo?: string;
 }

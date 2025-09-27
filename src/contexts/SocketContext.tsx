@@ -24,7 +24,8 @@ export const SocketProvider = ({ children, userId, token }: SocketProviderProps)
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io(`http://${window.location.hostname}:3002`, {
+    const serverUrl = (import.meta as any).env.VITE_API_URL || `http://${window.location.hostname}:3002`;
+    const newSocket = io(serverUrl, {
       auth: token ? { token } : undefined,
     });
 

@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { MessageCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
+import { API_BASE } from '../config';
 
 
 interface LoginScreenProps {
@@ -25,7 +26,7 @@ export function LoginScreen({ onAuthSuccess }: LoginScreenProps) {
     setIsLoading(true);
     setError('');
 
-    const url = isSignUp ? 'http://localhost:3002/api/register' : 'http://localhost:3002/api/login';
+    const url = isSignUp ? `${API_BASE}/api/register` : `${API_BASE}/api/login`;
     const body = isSignUp ? { name, mobile, password } : { mobile, password };
 
     try {

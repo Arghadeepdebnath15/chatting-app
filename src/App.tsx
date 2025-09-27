@@ -12,6 +12,7 @@ import { VideoCallScreen } from './components/VideoCallScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { CallScreen } from './components/CallScreen';
 import { Screen, Message, Chat, Call, User } from './types';
+import { API_BASE } from './config';
 
 function AppContent({ user, setUser, token, setToken }: { user: User | null; setUser: (u: User | null) => void; token: string | null; setToken: (t: string | null) => void }) {
   const { socket } = useSocket();
@@ -52,7 +53,7 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
   const fetchChats = async (authToken: string) => {
     setIsLoadingChats(true);
     try {
-      const response = await fetch('http://localhost:3002/api/chats', {
+      const response = await fetch(`${API_BASE}/api/chats`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -154,7 +155,7 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
     setChats(prev => prev.map(c => c.id === chatId ? { ...c, unreadCount: 0 } : c));
     // Mark as read on server
     if (token) {
-      fetch('http://localhost:3002/api/mark-read', {
+      fetch(`${API_BASE}/api/mark-read`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -71,6 +71,8 @@ const messageSchema = new mongoose.Schema({
   senderId: String,
   receiverId: String,
   content: String,
+  url: String,
+  fileName: String,
   timestamp: { type: Date, default: Date.now },
   type: { type: String, default: 'text' },
   status: { type: String, default: 'sent' } // 'sent', 'delivered', 'read'
@@ -397,6 +399,46 @@ app.post('/api/upload-avatar', authenticateToken, upload.single('avatar'), async
   }
 });
 
+// Upload file endpoint
+app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Validate file type (images, pdf, doc, docx, txt, audio)
+    const allowedTypes = /\.(jpg|jpeg|png|gif|pdf|doc|docx|txt|mp3|wav|ogg|m4a|webm)$/i;
+    if (!allowedTypes.test(req.file.originalname)) {
+      return res.status(400).json({ error: 'Invalid file type. Allowed: images, PDF, DOC, DOCX, TXT, MP3, WAV, OGG, M4A, WEBM' });
+    }
+
+    // Validate size < 5MB
+    if (req.file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File size too large. Max 5MB' });
+    }
+
+    // Upload to Cloudinary
+    const resourceType = req.file.mimetype.startsWith('audio') ? 'raw' : 'auto';
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { resource_type: resourceType, folder: 'chat-files' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
+    });
+
+    res.json({
+      url: result.secure_url,
+      fileName: req.file.originalname
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
 // Search user endpoint
 app.get('/api/search-user', authenticateToken, async (req, res) => {
   try {
@@ -640,8 +682,13 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async (data) => {
     try {
-      const { senderId, receiverId, content, type, tempId } = data;
-      const message = new Message({ senderId, receiverId, content, type, status: 'sent' });
+      const { senderId, receiverId, content, type, tempId, url, fileName } = data;
+      const messageData = { senderId, receiverId, content, type, status: 'sent' };
+      if (type === 'file' || type === 'voice') {
+        messageData.url = url;
+        messageData.fileName = fileName;
+      }
+      const message = new Message(messageData);
       await message.save();
 
       // Add sender to receiver's contacts if not already

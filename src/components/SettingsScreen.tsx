@@ -144,15 +144,15 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
       icon: Shield,
       color: 'bg-green-100 text-green-600',
       items: [
-        { 
-          name: 'Last Seen', 
+        {
+          name: 'Last Seen',
           description: 'Who can see when you were last online',
           toggle: true,
           value: lastSeen,
           onChange: setLastSeen
         },
-        { 
-          name: 'Read Receipts', 
+        {
+          name: 'Read Receipts',
           description: 'Send read receipts to contacts',
           toggle: true,
           value: readReceipts,
@@ -167,8 +167,8 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
       icon: Bell,
       color: 'bg-yellow-100 text-yellow-600',
       items: [
-        { 
-          name: 'Message Notifications', 
+        {
+          name: 'Message Notifications',
           description: 'Receive notifications for new messages',
           toggle: true,
           value: notifications,
@@ -183,8 +183,8 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
       icon: Palette,
       color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
       items: [
-        { 
-          name: 'Dark Mode', 
+        {
+          name: 'Dark Mode',
           description: `Currently using ${theme} theme`,
           toggle: true,
           value: theme === 'dark',
@@ -199,14 +199,14 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
   return (
     <div className="h-full bg-background flex flex-col">
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="bg-gradient-to-r from-green-500 to-emerald-500 dark:from-green-700 dark:to-emerald-700 text-white px-4 py-4 shadow-xl"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
         <div className="flex items-center">
-          <motion.button 
+          <motion.button
             onClick={onBack}
             className="mr-4 p-2 hover:bg-white/10 rounded-full transition-all duration-300"
             whileHover={{ scale: 1.05 }}
@@ -230,11 +230,16 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
           <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
             <div className="relative">
               <motion.img
-                src={profile?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face'}
+                src={profile?.avatar}
                 alt="Profile"
                 className="w-20 h-20 rounded-full object-cover ring-4 ring-green-200 dark:ring-green-800"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
+                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                  const target = e.currentTarget;
+                  target.onerror = null;
+                  target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face';
+                }}
               />
               {uploading && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
@@ -266,8 +271,8 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
 
         {/* Settings Sections */}
         {settingsSections.map((section, sectionIndex) => (
-          <motion.div 
-            key={sectionIndex} 
+          <motion.div
+            key={sectionIndex}
             className="bg-card mt-4 border-b border-border"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -275,7 +280,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
           >
             <div className="px-6 py-6">
               <div className="flex items-center space-x-3 mb-6">
-                <motion.div 
+                <motion.div
                   className={`w-12 h-12 rounded-xl flex items-center justify-center ${section.color}`}
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
@@ -284,7 +289,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
                 </motion.div>
                 <h3 className="text-xl font-semibold text-foreground">{section.title}</h3>
               </div>
-              
+
               <div className="space-y-2">
                 {section.items.map((item, itemIndex) => (
                   <motion.div
@@ -302,7 +307,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
                       </p>
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
-                    
+
                     {item.toggle ? (
                       <motion.div
                         whileHover={{ scale: 1.05 }}
@@ -324,7 +329,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
         ))}
 
         {/* Additional Options */}
-        <motion.div 
+        <motion.div
           className="bg-card mt-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -332,7 +337,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
         >
           <div className="px-6 py-6">
             <div className="space-y-2">
-              <motion.button 
+              <motion.button
                 className="w-full flex items-center justify-between p-4 hover:bg-muted/50 rounded-xl transition-all duration-300 group"
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
@@ -348,8 +353,8 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
               </motion.button>
-              
-              <motion.button 
+
+              <motion.button
                 className="w-full flex items-center justify-between p-4 hover:bg-muted/50 rounded-xl transition-all duration-300 group"
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
@@ -367,7 +372,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
               </motion.button>
 
               {/* Logout Item */}
-              <motion.button 
+              <motion.button
                 className="w-full flex items-center justify-between p-4 hover:bg-destructive/10 rounded-xl transition-all duration-300 group cursor-pointer"
                 onClick={handleLogout}
                 whileHover={{ x: 4 }}
@@ -389,7 +394,7 @@ export function SettingsScreen({ onBack, onLogout, user, token }: SettingsScreen
         </motion.div>
 
         {/* Theme Toggle Button */}
-        <motion.div 
+        <motion.div
           className="bg-card mt-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

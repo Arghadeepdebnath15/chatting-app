@@ -39,7 +39,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000"];
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://192.168.0.101:3000", "http://192.168.0.104:3000", "https://whatsapp-style-messaging-app.vercel.app"];
 
 const app = express();
 const server = http.createServer(app);
@@ -779,8 +779,8 @@ io.on('connection', (socket) => {
 
   // Video call signaling
   socket.on('call-offer', (data) => {
-    const { offer, to } = data;
-    io.to(to).emit('call-offer', { offer, from: socket.userId });
+    const { offer, to, callType } = data;
+    io.to(to).emit('call-offer', { offer, from: socket.userId, callType });
   });
 
   socket.on('call-answer', (data) => {

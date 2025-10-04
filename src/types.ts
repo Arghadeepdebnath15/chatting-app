@@ -1,4 +1,4 @@
-export type Screen = 'login' | 'chatList' | 'chat' | 'groupChat' | 'profile' | 'settings' | 'calls' | 'videoCall';
+export type Screen = 'login' | 'chatList' | 'chat' | 'groupChat' | 'profile' | 'settings' | 'calls' | 'videoCall' | 'voiceCall';
 
 export interface User {
   id: string;

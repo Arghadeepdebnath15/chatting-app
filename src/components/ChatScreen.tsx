@@ -349,7 +349,12 @@ export function ChatScreen({ chat, onBack, onNavigateToScreen, onNavigateToProfi
             >
               <Video className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-green-800 rounded-full transition-colors"><Phone className="w-5 h-5" /></button>
+            <button
+              onClick={() => { setSelectedUserId(contactId); setCallInitiator('me'); onNavigateToScreen('voiceCall'); }}
+              className="p-2 hover:bg-green-800 rounded-full transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+            </button>
             <button className="p-2 hover:bg-green-800 rounded-full transition-colors"><MoreVertical className="w-5 h-5" /></button>
           </div>
         </div>

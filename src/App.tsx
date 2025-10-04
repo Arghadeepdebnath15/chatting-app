@@ -9,6 +9,7 @@ import { GroupChatScreen } from './components/GroupChatScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { OtherUserProfileScreen } from './components/OtherUserProfileScreen';
 import { VideoCallScreen } from './components/VideoCallScreen';
+import { VoiceCallScreen } from './components/VoiceCallScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { CallScreen } from './components/CallScreen';
 import { Screen, Message, Chat, Call, User } from './types';
@@ -41,6 +42,9 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [callInitiator, setCallInitiator] = useState<'me' | 'other' | null>(null);
   const [pendingOffer, setPendingOffer] = useState<RTCSessionDescriptionInit | null>(null);
+  const [selectedUserIdForVoice, setSelectedUserIdForVoice] = useState<string | null>(null);
+  const [callInitiatorForVoice, setCallInitiatorForVoice] = useState<'me' | 'other' | null>(null);
+  const [pendingOfferForVoice, setPendingOfferForVoice] = useState<RTCSessionDescriptionInit | null>(null);
 
 
   const saveNavigationState = (screen: Screen, chatId: string | null) => {
@@ -50,6 +54,17 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
     } else {
       localStorage.removeItem('selectedChatId');
     }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentScreen');
+    localStorage.removeItem('selectedChatId');
+    setCurrentScreen('login');
+    setSelectedChatId(null);
   };
 
   const fetchChats = async (authToken: string) => {
@@ -79,6 +94,10 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
         }
       } else {
         console.error('Failed to fetch chats:', response.status, response.statusText);
+        if (response.status === 403) {
+          handleLogout();
+          return;
+        }
         setChats([]);
         setCurrentScreen('chatList');
         setSelectedChatId(null);
@@ -191,10 +210,17 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
   useEffect(() => {
     if (socket) {
       socket.on('call-offer', (data) => {
-        setSelectedUserId(data.from);
-        setCallInitiator('other');
-        setPendingOffer(data.offer);
-        setCurrentScreen('videoCall');
+        if (data.callType === 'video') {
+          setSelectedUserId(data.from);
+          setCallInitiator('other');
+          setPendingOffer(data.offer);
+          setCurrentScreen('videoCall');
+        } else if (data.callType === 'voice') {
+          setSelectedUserIdForVoice(data.from);
+          setCallInitiatorForVoice('other');
+          setPendingOfferForVoice(data.offer);
+          setCurrentScreen('voiceCall');
+        }
       });
     }
     return () => {
@@ -211,17 +237,6 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
     localStorage.setItem('user', JSON.stringify(authUser));
     await fetchChats(authToken);
     setCurrentScreen('chatList');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('currentScreen');
-    localStorage.removeItem('selectedChatId');
-    setCurrentScreen('login');
-    setSelectedChatId(null);
   };
 
   return (
@@ -353,6 +368,16 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
                       <CallScreen
                         calls={calls}
                         onBack={() => setCurrentScreen('chatList')}
+                        onStartVoiceCall={(contactId) => {
+                          setSelectedUserIdForVoice(contactId);
+                          setCallInitiatorForVoice('me');
+                          setCurrentScreen('voiceCall');
+                        }}
+                        onStartVideoCall={(contactId) => {
+                          setSelectedUserId(contactId);
+                          setCallInitiator('me');
+                          setCurrentScreen('videoCall');
+                        }}
                       />
                     )}
                     {currentScreen === 'videoCall' && selectedUserId && (
@@ -362,6 +387,15 @@ function AppContent({ user, setUser, token, setToken }: { user: User | null; set
                         userId={user!.id}
                         isCaller={callInitiator === 'me'}
                         pendingOffer={pendingOffer}
+                      />
+                    )}
+                    {currentScreen === 'voiceCall' && selectedUserIdForVoice && (
+                      <VoiceCallScreen
+                        onBack={() => { setCurrentScreen('chatList'); setSelectedUserIdForVoice(null); setPendingOfferForVoice(null); }}
+                        selectedUserId={selectedUserIdForVoice}
+                        userId={user!.id}
+                        isCaller={callInitiatorForVoice === 'me'}
+                        pendingOffer={pendingOfferForVoice}
                       />
                     )}
                   </>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, PhoneOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { useSocket } from '../contexts/SocketContext';
 
-interface VideoCallScreenProps {
+interface VoiceCallScreenProps {
   onBack: () => void;
   selectedUserId: string;
   userId: string;
@@ -11,18 +11,15 @@ interface VideoCallScreenProps {
   pendingOffer?: RTCSessionDescriptionInit | null;
 }
 
-export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pendingOffer }: VideoCallScreenProps) {
+export function VoiceCallScreen({ onBack, selectedUserId, userId, isCaller, pendingOffer }: VoiceCallScreenProps) {
   const { socket } = useSocket();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
   const [callState, setCallState] = useState<'calling' | 'ringing' | 'connected' | 'ended'>('calling');
   const [isIncomingCall, setIsIncomingCall] = useState(false);
   const [pendingOfferState, setPendingOfferState] = useState<RTCSessionDescriptionInit | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (socket) {
@@ -61,25 +58,10 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
     };
   }, [isCaller]);
 
-  useEffect(() => {
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
-
-  useEffect(() => {
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = remoteStream;
-    }
-  }, [remoteStream]);
-
   const startCall = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
 
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -91,9 +73,6 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
       pc.ontrack = (event) => {
         console.log('ontrack fired for caller', event.streams[0]);
         setRemoteStream(event.streams[0]);
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
         setCallState('connected');
       };
 
@@ -107,7 +86,7 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
       await pc.setLocalDescription(offer);
 
       if (socket) {
-        socket.emit('call-offer', { offer, to: selectedUserId, callType: 'video' });
+        socket.emit('call-offer', { offer, to: selectedUserId, callType: 'voice' });
       }
     } catch (error) {
       console.error('Error starting call:', error);
@@ -116,7 +95,7 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
   };
 
   const handleCallOffer = async (data: { offer: RTCSessionDescriptionInit; from: string; callType: string }) => {
-    if (data.from !== selectedUserId || data.callType !== 'video') return;
+    if (data.from !== selectedUserId || data.callType !== 'voice') return;
 
     if (!isCaller) {
       setIsIncomingCall(true);
@@ -139,9 +118,6 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
     pc.ontrack = (event) => {
       console.log('ontrack fired for receiver', event.streams[0]);
       setRemoteStream(event.streams[0]);
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
     };
 
     pc.onicecandidate = (event) => {
@@ -152,18 +128,15 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
 
     await pc.setRemoteDescription(new RTCSessionDescription(pendingOfferState));
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     setLocalStream(stream);
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = stream;
-    }
     stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
     if (socket) {
-      socket.emit('call-answer', { answer, to: selectedUserId, callType: 'video' });
+      socket.emit('call-answer', { answer, to: selectedUserId });
     }
   };
 
@@ -208,15 +181,6 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
     }
   };
 
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        track.enabled = isVideoOff;
-      });
-      setIsVideoOff(!isVideoOff);
-    }
-  };
-
   const endCall = () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
@@ -232,60 +196,44 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
 
   return (
     <div className="h-full bg-black flex flex-col">
-      {/* Videos */}
-      <div className="flex-1 flex flex-row">
-        {/* Local Video */}
-        <div className="flex-1 relative bg-black">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Remote Video */}
-        <div className="flex-1 relative bg-black">
-          {remoteStream ? (
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl">👤</span>
-                </div>
-                <p className="text-lg">Waiting for other user</p>
-              </div>
-            </div>
+      {/* Call Info */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="w-32 h-32 bg-gray-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <span className="text-4xl">👤</span>
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">Voice Call</h2>
+          <p className="text-lg text-gray-300 mb-4">
+            {callState === 'calling' && 'Calling...'}
+            {callState === 'ringing' && 'Incoming call'}
+            {callState === 'connected' && 'Connected'}
+            {callState === 'ended' && 'Call ended'}
+          </p>
+          {callState === 'connected' && (
+            <p className="text-sm text-gray-400">Tap to mute/unmute</p>
           )}
         </div>
+      </div>
 
-        {/* Call State */}
-        {callState === 'ringing' && isIncomingCall && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="text-center text-white">
-              <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">👤</span>
-              </div>
-              <p className="text-lg mb-6">Incoming video call</p>
-              <div className="flex space-x-4 justify-center">
-                <Button onClick={declineCall} className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-full">
-                  Decline
-                </Button>
-                <Button onClick={acceptCall} className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-full">
-                  Accept
-                </Button>
-              </div>
+      {/* Incoming Call Actions */}
+      {callState === 'ringing' && isIncomingCall && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="text-center text-white">
+            <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl">👤</span>
+            </div>
+            <p className="text-lg mb-6">Incoming voice call</p>
+            <div className="flex space-x-4 justify-center">
+              <Button onClick={declineCall} className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-full">
+                Decline
+              </Button>
+              <Button onClick={acceptCall} className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-full">
+                Accept
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="bg-gray-900 p-6">
@@ -295,12 +243,6 @@ export function VideoCallScreen({ onBack, selectedUserId, userId, isCaller, pend
             className={`w-12 h-12 rounded-full ${isMuted ? 'bg-red-500' : 'bg-gray-600'}`}
           >
             {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-          </Button>
-          <Button
-            onClick={toggleVideo}
-            className={`w-12 h-12 rounded-full ${isVideoOff ? 'bg-red-500' : 'bg-gray-600'}`}
-          >
-            {isVideoOff ? <VideoOff className="w-6 h-6" /> : <VideoIcon className="w-6 h-6" />}
           </Button>
           <Button
             onClick={endCall}

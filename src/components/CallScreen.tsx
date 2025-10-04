@@ -7,9 +7,11 @@ import { Input } from './ui/input';
 interface CallScreenProps {
   calls: Call[];
   onBack: () => void;
+  onStartVoiceCall: (contactId: string) => void;
+  onStartVideoCall: (contactId: string) => void;
 }
 
-export function CallScreen({ calls, onBack }: CallScreenProps) {
+export function CallScreen({ calls, onBack, onStartVoiceCall, onStartVideoCall }: CallScreenProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'missed'>('all');
 
   const formatTime = (date: Date) => {
@@ -171,10 +173,16 @@ export function CallScreen({ calls, onBack }: CallScreenProps) {
 
                 {/* Call Actions */}
                 <div className="flex items-center space-x-2 ml-3">
-                  <button className="p-2 text-green-500 hover:bg-green-50 rounded-full transition-colors">
+                  <button
+                    onClick={() => onStartVoiceCall(call.contactId)}
+                    className="p-2 text-green-500 hover:bg-green-50 rounded-full transition-colors"
+                  >
                     <Phone className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
+                  <button
+                    onClick={() => onStartVideoCall(call.contactId)}
+                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                  >
                     <Video className="w-4 h-4" />
                   </button>
                 </div>
